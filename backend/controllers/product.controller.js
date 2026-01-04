@@ -88,44 +88,82 @@ const deleteProduct = async (req, res) => {
 };
 
 const getPriceHistory = async (req, res) => {
-  try {
+    try {
+        const { productId } = req.params;
+        const userId = req.user.userId;
+
+        const product = await Product.findOne(
+            { _id: productId, userId },
+            { priceHistory: 1, name: 1, asin: 1 }
+        );
+
+        if (!product) {
+            return res.status(404).json({
+                success: false,
+                message: "Product not found or unauthorized",
+            });
+        }
+
+        const chartData = product.priceHistory.map(item => ({
+            price: item.price,
+            date: item.date,
+        }));
+
+        return res.status(200).json({
+            success: true,
+            product: {
+                id: product._id,
+                name: product.name,
+                asin: product.asin,
+            },
+            data: chartData,
+        });
+    } catch (error) {
+        console.error("Price history fetch failed:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Failed to fetch price history",
+        });
+    }
+};
+
+const getTargetSuggestion = async (req, res) => {
     const { productId } = req.params;
     const userId = req.user.userId;
 
     const product = await Product.findOne(
-      { _id: productId, userId },
-      { priceHistory: 1, name: 1, asin: 1 }
+        { _id: productId, userId },
+        { priceHistory: 1, price: 1, name: 1 }
     );
 
-    if (!product) {
-      return res.status(404).json({
-        success: false,
-        message: "Product not found or unauthorized",
-      });
+    if (!product || product.priceHistory.length === 0) {
+        return res.status(400).json({
+            success: false,
+            message: "Not enough price history to suggest target",
+        });
     }
 
-    const chartData = product.priceHistory.map(item => ({
-      price: item.price,
-      date: item.date,
-    }));
+    const prices = product.priceHistory.map(p => p.price);
 
-    return res.status(200).json({
-      success: true,
-      product: {
-        id: product._id,
-        name: product.name,
-        asin: product.asin,
-      },
-      data: chartData,
+    const lowest = Math.min(...prices);
+    const average = prices.reduce((a, b) => a + b, 0) / prices.length;
+
+    const suggestedTarget = Math.round(
+        Math.min(lowest, average * 0.9)
+    );
+
+    return res.json({
+        success: true,
+        product: product.name,
+        currentPrice: product.price,
+        suggestions: {
+            lowestEver: lowest,
+            averagePrice: Math.round(average),
+            smartTarget: suggestedTarget,
+        },
     });
-  } catch (error) {
-    console.error("Price history fetch failed:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Failed to fetch price history",
-    });
-  }
 };
+
 
 
 module.exports = {
@@ -133,4 +171,5 @@ module.exports = {
     getMyProducts,
     deleteProduct,
     getPriceHistory,
+    getTargetSuggestion,
 }
