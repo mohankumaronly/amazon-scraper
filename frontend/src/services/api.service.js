@@ -19,3 +19,7 @@ export const getMe = () => {
 export const logout = () => {
   return api.post('/api/auth/logout')
 }
+
+export const forgotPassword = (data) => {
+  return api.post('/api/auth/forgot-password')
+}
