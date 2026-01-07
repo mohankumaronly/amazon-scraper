@@ -6,6 +6,12 @@ const RefreshToken = require("../models/auth.refreshToken");
 const sendEmail = require('../utils/sendEmail');
 const verifyEmailTemplate = require("../utils/Emails/emailVerificationTemplate");
 
+const cookieOptions = {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+};
+
 const register = async (req, res) => {
     try {
         const {

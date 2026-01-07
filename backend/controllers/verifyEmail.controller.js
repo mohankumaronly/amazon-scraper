@@ -3,6 +3,13 @@ const jwt = require("jsonwebtoken");
 const RefreshToken = require("../models/auth.refreshToken");
 const User = require("../models/auth.model");
 
+const cookieOptions = {
+  httpOnly: true,
+  secure: true,      
+  sameSite: "none", 
+};
+
+
 const verifyEmail = async (req, res) => {
   try {
 
