@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowRight, ShieldCheck } from 'lucide-react';
+import { ArrowRight, ShieldCheck, CheckCircle2, AlertCircle } from 'lucide-react';
 import AuthLayout from '../Layouts/AuthLayout';
 import AuthInput from '../components/AuthInputs';
 import AuthButton from '../components/AuthButton';
@@ -8,19 +8,21 @@ import { useNavigate } from 'react-router-dom';
 const RegisterPage = () => {
     const navigate = useNavigate();
 
-    // 1. Initialize state for all fields
     const [formData, setFormData] = useState({
-        fullName: '',
+        firstName: '',
+        lastName: '',
         email: '',
         password: ''
     });
 
-    // 2. Simple validation logic
-    // Checks if name is entered, email includes '@', and password is 8+ chars
-    const canSubmit = 
-        formData.fullName.trim().length > 0 && 
-        formData.email.includes('@') && 
-        formData.password.length >= 8;
+    const validation = {
+        firstName: formData.firstName.trim().length >= 2,
+        lastName: formData.lastName.trim().length >= 2,
+        email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email),
+        password: formData.password.length >= 8
+    };
+
+    const isFormInvalid = Object.values(validation).some(valid => !valid);
 
     const handleChange = (e, field) => {
         setFormData({ ...formData, [field]: e.target.value });
@@ -31,53 +33,73 @@ const RegisterPage = () => {
             title="Create your account"
             subtitle="Join 500+ sellers extracting data daily."
         >
-            <form className="space-y-5" onSubmit={(e) => e.preventDefault()}>
-                <AuthInput 
-                    label="Full Name" 
-                    placeholder="John Doe" 
-                    value={formData.fullName}
-                    onChange={(e) => handleChange(e, 'fullName')}
-                />
-                
-                <AuthInput 
-                    label="Email Address" 
-                    type="email" 
-                    placeholder="name@company.com" 
-                    value={formData.email}
-                    onChange={(e) => handleChange(e, 'email')}
-                />
-                
-                <AuthInput 
-                    label="Password" 
-                    type="password" 
-                    placeholder="••••••••" 
-                    value={formData.password}
-                    onChange={(e) => handleChange(e, 'password')}
-                />
+            <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
 
-                <div className="flex items-start gap-2 py-2 text-left">
-                    <ShieldCheck className={`w-4 h-4 mt-1 shrink-0 ${canSubmit ? 'text-green-500' : 'text-slate-300'}`} />
-                    <p className="text-xs text-slate-500 leading-relaxed">
-                        Your data is encrypted and secure. We never share your history.
+                <div className="grid grid-cols-2 gap-4">
+                    <AuthInput
+                        label="First Name"
+                        placeholder="John"
+                        value={formData.firstName}
+                        onChange={(e) => handleChange(e, 'firstName')}
+                    />
+                    <AuthInput
+                        label="Last Name"
+                        placeholder="Doe"
+                        value={formData.lastName}
+                        onChange={(e) => handleChange(e, 'lastName')}
+                    />
+                </div>
+
+                <div className="relative">
+                    <AuthInput
+                        label="Email Address"
+                        type="email"
+                        placeholder="name@company.com"
+                        value={formData.email}
+                        onChange={(e) => handleChange(e, 'email')}
+                    />
+                    {formData.email && (
+                        <div className="absolute right-3 top-10">
+                            {validation.email ?
+                                <CheckCircle2 className="w-4 h-4 text-green-500" /> :
+                                <AlertCircle className="w-4 h-4 text-rose-400" />
+                            }
+                        </div>
+                    )}
+                </div>
+
+                <div className="relative">
+                    <AuthInput
+                        label="Password"
+                        type="password"
+                        placeholder="••••••••"
+                        value={formData.password}
+                        onChange={(e) => handleChange(e, 'password')}
+                    />
+                    <p className={`text-[10px] mt-1 ${validation.password ? 'text-green-500' : 'text-slate-400'}`}>
+                        {validation.password ? '✓ Ready to go' : '• Minimum 8 characters'}
                     </p>
                 </div>
 
-                {/* 3. Button is disabled until 'canSubmit' is true */}
-                <AuthButton 
-                    icon={ArrowRight} 
-                    disabled={!canSubmit}
+                <AuthButton
+                    icon={ArrowRight}
+                    disabled={isFormInvalid}
                 >
                     Create Account
                 </AuthButton>
+
+                <div className="flex items-start gap-2 py-2">
+                    <ShieldCheck className={`w-4 h-4 mt-0.5 ${!isFormInvalid ? 'text-green-500' : 'text-slate-300'}`} />
+                    <p className="text-xs text-slate-500">
+                        Secure, encrypted registration.
+                    </p>
+                </div>
             </form>
 
-            <div className="mt-8 pt-6 border-t border-slate-50 text-center">
+            <div className="mt-8 pt-6 border-t border-slate-100 text-center">
                 <p className="text-sm text-slate-500">
                     Already have an account?{' '}
-                    <span 
-                        onClick={() => navigate('/login')}
-                        className="text-orange-600 font-bold hover:underline cursor-pointer"
-                    >
+                    <span onClick={() => navigate('/login')} className="text-orange-600 font-bold hover:underline cursor-pointer">
                         Sign In
                     </span>
                 </p>
