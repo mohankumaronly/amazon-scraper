@@ -20,7 +20,7 @@ const register = async (req, res) => {
                 message: "All fields are required",
             });
         }
-        const existingUser = await User.findOne({ email :email.toLowerCase() });
+        const existingUser = await User.findOne({ email: email.toLowerCase() });
         if (existingUser) {
             return res.status(400).json({
                 success: false,
@@ -67,83 +67,97 @@ const register = async (req, res) => {
 
 const login = async (req, res) => {
     try {
-        const {
-            email,
-            password,
-            rememberMe
-        } = req.body;
+        const { email, password, rememberMe = false } = req.body;
+
         if (!email || !password) {
             return res.status(400).json({
                 success: false,
-                message: "All fields are require"
-            })
+                message: "All fields are required",
+            });
         }
+
         const user = await User.findOne({ email: email.toLowerCase() });
         if (!user) {
             return res.status(401).json({
                 success: false,
                 message: "Invalid credentials",
-            })
+            });
         }
+
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
             return res.status(401).json({
                 success: false,
-                message: "Invalid credentials"
+                message: "Invalid credentials",
             });
         }
+
         if (!user.isEmailVerified) {
             return res.status(403).json({
                 success: false,
                 message: "Please verify your email before logging in",
             });
         }
+
+        const accessTokenExpiry = rememberMe ? "7d" : "15m";
+        const accessTokenMaxAge = rememberMe
+            ? 7 * 24 * 60 * 60 * 1000
+            : 15 * 60 * 1000;
+
+        const refreshTokenExpiry = rememberMe
+            ? 30 * 24 * 60 * 60 * 1000
+            : 7 * 24 * 60 * 60 * 1000;
+
+
         const accessToken = jwt.sign(
             { userId: user._id },
             process.env.JWT_SECRET_KEY,
-            { expiresIn: "15m" }
+            { expiresIn: accessTokenExpiry }
         );
-        const NewRefreshToken = crypto.randomBytes(40).toString('hex');
+
+        const newRefreshToken = crypto.randomBytes(40).toString("hex");
         const hashedRefreshToken = crypto
             .createHash("sha256")
-            .update(NewRefreshToken)
+            .update(newRefreshToken)
             .digest("hex");
-        const refreshTokenExpiry = rememberMe ?
-            30 * 24 * 60 * 60 * 1000 :
-            7 * 24 * 60 * 60 * 1000;
+
         await RefreshToken.create({
             userId: user._id,
             token: hashedRefreshToken,
             expiresAt: Date.now() + refreshTokenExpiry,
-        })
+        });
+
         const { password: _, ...safeUserData } = user.toObject();
+
         return res
             .cookie("accessToken", accessToken, {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === "production",
-                sameSite: 'lax',
-                maxAge: 15 * 60 * 1000,
+                sameSite: "lax",
+                maxAge: accessTokenMaxAge,
             })
-            .cookie("refreshToken", NewRefreshToken, {
+            .cookie("refreshToken", newRefreshToken, {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === "production",
-                sameSite: 'lax',
-                maxAge: refreshTokenExpiry
+                sameSite: "lax",
+                maxAge: refreshTokenExpiry,
             })
             .status(200)
             .json({
                 success: true,
                 message: "User logged in successfully",
-                data: safeUserData
+                data: safeUserData,
             });
+
     } catch (error) {
         console.error(error);
         return res.status(500).json({
             success: false,
-            message: "Server internal error"
+            message: "Server internal error",
         });
     }
-}
+};
+
 
 const logOut = async (req, res) => {
     try {

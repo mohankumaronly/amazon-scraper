@@ -1,37 +1,54 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowRight, Lock, CheckCircle2, AlertCircle, XCircle } from 'lucide-react';
 import AuthInput from '../components/AuthInputs';
 import AuthLayout from '../Layouts/AuthLayout';
 import AuthButton from '../components/AuthButton';
 import { useNavigate } from 'react-router-dom';
 import LoadingScreen from '../components/LoadingScreen';
-import { userLogin } from '../services/api.service';
+import { getMe, userLogin } from '../services/api.service';
 
 const LoginPage = () => {
     const navigate = useNavigate();
-    
+
+    const [checkingAuth, setCheckingAuth] = useState(true);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
-
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [rememberMe, setRememberMe] = useState(false);
 
     const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
     const isPasswordFilled = password.length > 0;
-
     const canSubmit = isEmailValid && isPasswordFilled;
+
+    useEffect(() => {
+        const checkAuth = async () => {
+            try {
+                await getMe();
+                navigate("/dashboard");
+            } catch {
+                setCheckingAuth(false);
+            }
+        };
+
+        checkAuth();
+    }, []);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!canSubmit || loading) return;
+
         setLoading(true);
         setError("");
+
         try {
             const payload = {
                 email: email.trim(),
                 password,
+                rememberMe,
             };
+
             await userLogin(payload);
             navigate("/dashboard");
 
@@ -48,6 +65,9 @@ const LoginPage = () => {
         }
     };
 
+    if (checkingAuth) {
+        return <LoadingScreen />;
+    }
 
     return (
         <>
@@ -57,7 +77,9 @@ const LoginPage = () => {
                     <span className="text-xs font-semibold">{error}</span>
                 </div>
             )}
+
             {loading && <LoadingScreen />}
+
             <AuthLayout
                 title="Welcome back"
                 subtitle="Enter your details to access your dashboard."
@@ -74,9 +96,9 @@ const LoginPage = () => {
                         />
                         {email && (
                             <div className="absolute right-3 top-10">
-                                {isEmailValid ?
-                                    <CheckCircle2 className="w-4 h-4 text-green-500" /> :
-                                    <AlertCircle className="w-4 h-4 text-rose-400" />
+                                {isEmailValid
+                                    ? <CheckCircle2 className="w-4 h-4 text-green-500" />
+                                    : <AlertCircle className="w-4 h-4 text-rose-400" />
                                 }
                             </div>
                         )}
@@ -98,17 +120,17 @@ const LoginPage = () => {
                         }
                     />
 
-                    <div className="flex items-center justify-between py-1">
-                        <div className="flex items-center gap-2">
-                            <input
-                                type="checkbox"
-                                id="remember"
-                                className="w-4 h-4 rounded border-slate-300 text-orange-500 focus:ring-orange-500 cursor-pointer"
-                            />
-                            <label htmlFor="remember" className="text-xs text-slate-500 font-medium cursor-pointer">
-                                Remember this device
-                            </label>
-                        </div>
+                    <div className="flex items-center gap-2">
+                        <input
+                            type="checkbox"
+                            id="remember"
+                            checked={rememberMe}
+                            onChange={(e) => setRememberMe(e.target.checked)}
+                            className="w-4 h-4 rounded border-slate-300 text-orange-500 focus:ring-orange-500"
+                        />
+                        <label htmlFor="remember" className="text-xs text-slate-500 font-medium">
+                            Remember this device
+                        </label>
                     </div>
 
                     <AuthButton
@@ -133,8 +155,8 @@ const LoginPage = () => {
 
                 <div className="mt-8 flex items-center justify-center gap-2 text-slate-400">
                     <Lock className={`w-3 h-3 ${canSubmit ? 'text-green-500' : 'text-slate-400'}`} />
-                    <p className="text-[10px] uppercase tracking-widest font-semibold text-center">
-                        {canSubmit ? 'System ready for login' : 'Secure encrypted login connection'}
+                    <p className="text-[10px] uppercase tracking-widest font-semibold">
+                        Secure encrypted login
                     </p>
                 </div>
             </AuthLayout>

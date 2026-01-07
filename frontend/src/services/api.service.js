@@ -11,3 +11,7 @@ export const verifyEmail = (token) => {
 export const userLogin = (data) => {
   return api.post("/api/auth/login", data);
 };
+
+export const getMe = () => {
+  return api.get("/api/auth/me")
+}
