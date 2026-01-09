@@ -5,7 +5,7 @@ const baseUrl = import.meta.env.VITE_BACKEND_API_URL;
 
 const api = axios.create({
   baseURL: baseUrl,
-  withCredentials: true,
+  withCredentials: true,  
   timeout: 10000,
 });
 

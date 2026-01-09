@@ -12,6 +12,11 @@ import NotFoundPage from "../pages/NotFoundPage";
 
 import PublicRoute from "../context/PublicRoute";
 import ProtectedRoute from "../context/ProtectedRoute";
+import AnalyticsPage from "../pages/AnalyticsPage";
+import MyTracks from "../pages/MyTracks";
+import ScraperEngine from "../pages/ScraperEngine";
+import SettingPage from "../pages/SettingPage";
+import ScraperResultCard from "../components/DashboardComponents/ScraperResultCard";
 
 const AppRouters = () => {
   return (
@@ -21,9 +26,15 @@ const AppRouters = () => {
       <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
       <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
       <Route path="/reset-password/:token" element={<PublicRoute><ResetPassword /></PublicRoute>} />
-      <Route path="/email-verification" element={<PublicRoute><EmailVerificationScreen /></PublicRoute>}/>
-      <Route path="/verify-email/:token" element={<PublicRoute><EmailSuccessPage /></PublicRoute>}/>
-      <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>}/>
+      <Route path="/email-verification" element={<PublicRoute><EmailVerificationScreen /></PublicRoute>} />
+      <Route path="/verify-email/:token" element={<PublicRoute><EmailSuccessPage /></PublicRoute>} />
+      <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+      <Route path="/analytics" element={<ProtectedRoute><AnalyticsPage /></ProtectedRoute>} />
+      <Route path="/tracks" element={<ProtectedRoute><MyTracks /></ProtectedRoute>} />
+      <Route path="/scraper" element={<ProtectedRoute><ScraperEngine /></ProtectedRoute>} />
+      <Route path="/settings" element={<ProtectedRoute><SettingPage /></ProtectedRoute>} />
+      <Route path="/temp1" element={<ProtectedRoute><ScraperResultCard /></ProtectedRoute>} />
+      <Route path="/temp2" element={<ProtectedRoute><SettingPage /></ProtectedRoute>} />
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
